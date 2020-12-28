@@ -1,0 +1,649 @@
+<html>
+<head>
+    <title>Among Us FoodMap</title> 
+    {% load staticfiles %}
+    <link REL="SHORTCUT ICON" HREF="{% static 'images/favicon.ico' %}"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-twzipcode@1.7.14/jquery.twzipcode.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="generator"
+          content="HTML Tidy for HTML5 (experimental) for Windows https://github.com/w3c/tidy-html5/tree/c63cc39"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="author" content="colorlib.com"/>
+    <link rel="stylesheet" href="../static/css/main.css"/>
+
+    <style>
+        #foodmap{
+            font-size: 30px;
+        }
+
+        #map {
+            height: 600px;
+            weight: 100%;
+        }
+        .CountryCss {
+            font-family: 微軟正黑體;
+            background: #D0D0D0;
+            color: black;
+            height: 60px;
+            font-size: 25px;
+            text-align: center;
+
+        }
+
+        .AreaCss {
+            font-family: 微軟正黑體;
+            background: #D0D0D0;
+            color: black;
+            height: 60px;
+            font-size: 25px;
+            text-align: center;
+        }
+
+        .ZipCSS {
+            font-family: 微軟正黑體;
+            background: #D0D0D0;
+            color: black;
+            height: 60px;
+            font-size: 25px;
+            text-align: center;
+        }
+        .btn-search{
+            height: 50px;
+            width: 60px;
+            background: #4272d7;
+            white-space: nowrap;
+            border-radius: .5px;
+            font-size: 20px;
+            color: #fff;
+            transition: all .2s ease-out, color .2s ease-out;
+            border: 0;
+            cursor: pointer;
+        }
+        .button2 {
+            height: 50px;
+            width: 100px;
+            background: #4272d7;
+            white-space: nowrap;
+            border-radius: .5px;
+            font-size: 20px;
+            color: #fff;
+            transition: all .2s ease-out, color .2s ease-out;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .select-box {
+            cursor: pointer;
+            position: relative;
+            max-width: 50em;
+            margin: 5em auto;
+            width: 100%;
+        }
+
+        .select,
+        .label {
+            color: #414141;
+            display: block;
+            font: 400 17px/2em 'Source Sans Pro', sans-serif;
+        }
+
+        .select {
+            width: 100%;
+            position: absolute;
+            top: 0;
+            padding: 5px 0;
+            height: 40px;
+            opacity: 0;
+            -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+            background: none transparent;
+            border: 0 none;
+        }
+
+        .select-box1 {
+            background: #ececec;
+        }
+
+        .label {
+            position: relative;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .open .label::after {
+            content: "▲";
+        }
+
+        .label::after {
+            content: "▼";
+            font-size: 12px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            padding: 5px 15px;
+            border-left: 5px solid #fff;
+        }
+
+        
+    </style>
+</head>
+
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgvvjFFN4uKJg3Pw7yDQNfdB4S26OJSXE&callback=initMap">
+</script>
+
+<script>
+    src = "jquery-3.2.1.min.js";
+    //MAP CODE//////////////////////////////////////////////////////////////////////
+    var map, geocoder, address, infoWindow;
+    
+    //map初始化
+    function initMap() {
+
+        {% for country in  select_country%}
+            address = "{{ country.country_name }}"
+        {% endfor %}
+        {% for city in  select_city%}
+            address = address+ "{{ city.city_name }}"
+        {% endfor %}
+
+        console.log(address);
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 15
+        });
+        infoWindow = new google.maps.InfoWindow();
+        geocoder = new google.maps.Geocoder();
+        //User未輸入address時, 顯示使用者當前的GPS位置
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setCenter(pos);
+            }, function () {
+                handleLocationError(true, infoWindow, map.getCenter());
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infoWindow, map.getCenter());
+        }
+
+        //若User已選擇addrsss, 啟動Google Maps API Geocoder, 將User輸入的address轉換為經緯度
+        if (address !== 'NoneNone') {
+            geocoder.geocode(
+                {
+                    'address': address,
+                },
+                function (results, status) {
+                    if (status === "OK") {
+                        //設置地圖的檢視中心點
+                        map.setCenter(results[0].geometry.location);
+
+                        //督進圖釘
+
+                    } else {
+                        //alert("請先選擇區域");
+                    }
+                }
+            )
+        }
+    }
+
+    //GMaps Error Handler
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+            'Error: The Geolocation service failed.' :
+            'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+    }
+
+    //END OF MAP CODE//////////////////////////////////////////////////////////////////////
+
+    function login_btn_click() {
+        window.open('login');
+    }
+
+    function register_btn_click() {
+        window.open('register');
+    }
+
+
+    var restaurant_add;
+    var restaurant_name;
+    var restaurant_id;
+    {#var company_add;#}
+    {#var company_name;#}
+    {#var company_id;#}
+    {#var store_add;#}
+    {#var store_name;#}
+    {#var store_id;#}
+    {#var show;#}
+    {#var show_value;#}
+    {#var company;#}
+    {#var company_value;#}
+    {#var store;#}
+    {#var store_value;#}
+    {#var add_show_id;#}
+    {#var add_company_id;#}
+    {#var add_store_id#}
+
+    var restaurant;
+    var restaurant_value
+    var add_restaurant_id;
+
+    var selected_country
+
+
+    /*
+    function getCompanyVal() {
+        var company = document.getElementById("jobSelect");
+        company_add = company.options[company.selectedIndex].value;
+        company_name = company.options[company.selectedIndex].text;
+        company_id = company.options[company.selectedIndex].id;
+
+
+        geocoder.geocode(
+            {'address': company_add},
+            function (results, status) {
+                if (status === "OK") {
+                    //設置地圖的檢視中心點
+                    map.setCenter(results[0].geometry.location);
+                    //督進圖釘
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        position: results[0].geometry.location,
+                        icon: '/static/images/restaurant.png'
+                    });
+                    infoWindow.setPosition(results[0].geometry.location);
+                    infoWindow.setContent(company_name);
+                    infoWindow.open(map, marker);
+
+                } else {
+                    alert("MDFK Status Error: " + status);
+                }
+            }
+        );
+
+    }
+*/
+        function getRestaurantVal() {
+        var restaurant = document.getElementById("restaurantSelect");
+        restaurant_add = restaurant.options[restaurant.selectedIndex].value;
+        restaurant_name = restaurant.options[restaurant.selectedIndex].text;
+        restaurant_id = restaurant.options[restaurant.selectedIndex].id;
+
+
+        geocoder.geocode(
+            {'address': restaurant_add},
+            function (results, status) {
+                if (status === "OK") {
+                    //設置地圖的檢視中心點
+                    map.setCenter(results[0].geometry.location);
+                    //督進圖釘
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        position: results[0].geometry.location,
+                        icon: '/static/images/restaurant.png'
+                    });
+                    infoWindow.setPosition(results[0].geometry.location);
+                    infoWindow.setContent(restaurant_name);
+                    infoWindow.open(map, marker);
+
+                } else {
+                    alert("Error: " + status);
+                }
+            }
+        );
+
+    }
+    /*
+    function getStoreVal() {
+        var store = document.getElementById("storeSelect");
+        store_add = store.options[store.selectedIndex].value;
+        store_name = store.options[store.selectedIndex].text;
+        store_id = store.options[store.selectedIndex].id;
+
+        geocoder.geocode(
+            {'address': store_add},
+            function (results, status) {
+                if (status === "OK") {
+                    //設置地圖的檢視中心點
+                    map.setCenter(results[0].geometry.location);
+                    //督進圖釘
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        position: results[0].geometry.location,
+                        icon: '/static/images/restaurant.png'
+                    });
+                    infoWindow.setPosition(results[0].geometry.location);
+                    infoWindow.setContent(store_name);
+                    infoWindow.open(map, marker);
+
+                } else {
+                    alert("Status Error: " + status);
+                }
+            }
+        );
+
+    }
+        */
+
+    function add2collection() {
+        if ({{ user_id }} == 0
+    )
+        {
+            alert("請先登入");
+        }
+        else
+        {
+            restaurant = document.getElementById("restaurantSelect");
+            restaurant_value = $('label[for="restaurantSelect"]').text();
+            
+            
+            
+            /*
+            show = document.getElementById("showSelect");
+
+            add_show_id = show.options[show.selectedIndex].id;
+            company = document.getElementById("jobSelect");
+
+            add_company_id = company.options[company.selectedIndex].id;
+            store = document.getElementById("storeSelect");
+
+            add_store_id = store.options[store.selectedIndex].id;
+            show_value = $('label[for="showSelect"]').text();
+            company_value = $('label[for="jobSelect"]').text();
+            store_value = $('label[for="storeSelect"]').text();
+            */
+            /*
+            {#company_value = company.options[company.selectedIndex].value;#}
+            {#store_value = store.options[store.selectedIndex].value;#}
+            {#show_value = show.options[show.selectedIndex].value;#}
+            */
+
+            if (restaurant_value == "請選擇（餐廳）") {
+                alert("請選擇餐廳")
+            } else {
+                add_restaurant_id = restaurant.options[restaurant.selectedIndex].id;
+                alert("已加入")
+                $.ajax({
+                    type: "POST",
+                    url: "",
+                    data: {
+                        //'type_c': type,
+                        'restaurant_id_c': add_restaurant_id,
+                        'restaurant_name_c': restaurant_name,
+                        //{#'show_id_c': add_show_id,#}
+                        //{#'show_name_c': show_name,#}
+                        //{#'company_id_c': add_company_id,#}
+                        //{#'company_name_c': company_name,#}
+                        //{#'store_id_c': add_store_id,#}
+                        //{#'store_name_c': store_name,#}
+                        // all of this data is submitted via POST to your view.
+                        // in django, request.POST['background-color']
+                    },
+                    headers: {
+                        'X-CSRFTOKEN': "{{ csrf_token }}",
+                    },
+                    success: function (data) {
+
+                    }
+                });
+
+            }
+
+        }
+    }
+</script>
+
+<body>
+
+{% if messages %}
+<script>
+    {% for msg in messages %}
+        alert('{{ msg.message }}');
+    {% endfor %}
+</script>
+{% endif %}
+
+<div align="right" ; style="background:#a17e6b; height:120px">
+    <div align="left">
+        <fieldset >
+            <legend id="foodmap">FoodMap</legend>
+        </fieldset>
+    </div>
+    <!------------------------------------------------------------------------>
+    {% if user.is_authenticated %}
+        <font color="white" style="font-family:Microsoft JhengHei;" >Hi {{ user.username }}!</font>
+        <br>
+        <a href="{% url 'logout' %}"
+           style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI">登出</a>
+    {% else %}
+        <button type="button" class="btn btn-outline-primary" style="margin-top: 0px; margin-right: 5px; border-color:white;">
+            <a style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI; font-size:25px; " href="{% url 'login' %}">
+                登入
+            </a>
+        </button>
+        &nbsp;
+        &nbsp;
+        <button type="button" class="btn btn-outline-primary" style="margin-right: 60px; margin-top: 0px; border-color:white;">
+            <a style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI; font-size:25px;"href="{% url 'signup' %}">
+                註冊
+            </a>
+        </button>
+    {% endif %}
+    <!------------------------------------------------------------------------>
+</div>
+<div class="s01">
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {% comment %} <fieldset>
+            <legend>FoodMap</legend>
+        </fieldset> {% endcomment %}
+
+
+        <div class="inner-form" style="margin-top: 150px;">
+                <div>
+                    <td class="ten wide">
+                        <select class="CountryCss"id="chose_country" name="chose_country" class="CountryCss" style="background-color: #a17e6b; border-radius: 10px; color: white;">
+                            <option value="" disabled selected>選擇國家</option>
+                            {% for country in countrys %}
+                                <option value={{ country.id}}>{{country.country_name}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                </div>
+                <div id="select_city">
+                    <td  class="ten wide">
+
+                        <select class="CountryCss" id="chose_area" name="city" style="background-color: #a17e6b; border-radius: 10px; color: white;">
+                            <option value="" disabled selected>選擇地區</option>
+                        </select>
+                    </td>
+                </div>
+
+{#                <div id="select_city_3" hidden="true">#}
+{#                    <td  class="ten wide" >#}
+{#                        <select class="CountryCss" id="chose_area" name="county">#}
+{#                            <option value="" disabled selected>選擇地區</option>#}
+{#                            {% for city in citys_3 %}#}
+{#                                    <option>{{city.city_name}}</option>#}
+{#                            {% endfor %}#}
+{#                        </select>#}
+{#                    </td>#}
+{#                </div>#}
+
+
+{#            <div id="twzipcode" hidden="true"></div>#}
+{#            <script>#}
+{#                $("#twzipcode").twzipcode({#}
+{#                    'countySel': '{{ county }}',#}
+{#                    'districtSel': '{{ district }}',#}
+{#                    css: ['CountryCss', 'AreaCss', 'ZipCSS'],#}
+{#                });#}
+                {#var array = $("#twzipcode").twzipcode('get', 'county,district');#}
+                {#2020.11.20先拿掉 會導致post2次 #}
+                {#$.ajax({#}
+                {#    type: "POST",#}
+                {#    url: "",#}
+                {#    data: {#}
+                {#        'county': array[0],#}
+                {#        'district': array[1],// from form#}
+                {#        // all of this data is submitted via POST to your view.#}
+                {#        // in django, request.POST['background-color']#}
+                {#    },#}
+                {#    headers: {#}
+                {#        'X-CSRFTOKEN': "{{ csrf_token }}",#}
+                {#    },#}
+                {#    success: function (data) {#}
+                {##}
+                {#    }#}
+                {#});#}
+
+
+{#            </script>#}
+
+
+            <div class="input-field third-wrap">
+                <button class="btn-search" type="submit" id="search_btn" style="font-family:Microsoft JhengHei">搜尋
+                </button>
+            </div>
+
+            <div class="input-field third-wrap">
+                <button id="search_record_btn" class="btn-search" type="button" onclick="search_record_btn_click()"
+                        style="font-family:Microsoft JhengHei">
+                    <a href="/collection/" style="color:white; text-decoration:none;">
+                        我的收藏
+                    </a>
+                </button>
+            </div>
+        </div>
+
+{#        <div class="select-box">#}
+{#            <font color="white" style="font-family:Microsoft JhengHei" href="/collection/">軟體產業：</font>#}
+{#            <label for="jobSelect" class="label select-box1" value=0 selected disabled hidden><span class="label-desc">請選擇（軟體產業）</span></label>#}
+{#            <select class="select" onchange="getCompanyVal()" id="jobSelect" name="jobSelect">#}
+{#                {% for company_item in company_filter %}#}
+{#                    <option id="{{ company_item.id }}"#}
+{#                            value={{ company_item.jobaddress }}>{{ company_item.jobname }}</option> {% endfor %}#}
+{#            </select>#}
+{#        </div>#}
+{##}
+{##}
+{#        <div class="select-box">#}
+{#            <font color="white" style="font-family:Microsoft JhengHei">便利商店：</font>#}
+{#            <label for="storeSelect" class="label select-box1" value=0 selected disabled hidden><span#}
+{#                    class="label-desc">請選擇（便利商店）</span></label>#}
+{#            <select class="select" onchange="getStoreVal()" id="storeSelect" name="storeSelect">#}
+{#                {% for store_item in store_filter %}#}
+{#                    <option id="{{ store_item.id }}"#}
+{#                            value={{ store_item.convenience_address }}>{{ store_item.convenience_class }}#}
+{#                        - {{ store_item.convenience_name }}</option> {% endfor %}#}
+{#            </select>#}
+{#        </div>#}
+{##}
+{##}
+{#        <div class="select-box">#}
+{#            <font color="white" style="font-family:Microsoft JhengHei">展覽：</font>#}
+{#            <label for="showSelect" class="label select-box1" value=0 selected disabled hidden><span class="label-desc">請選擇（展覽）</span></label>#}
+{#            <select class="select" onchange="getShowVal()" id="showSelect" name="showSelect">#}
+{#                {% for show_item in Show_filter %}#}
+{#                    <option id="{{ show_item.id }}"#}
+{#                            value={{ show_item.location }}>{{ show_item.title }}</option> {% endfor %}#}
+{#            </select>#}
+{#        </div>#}
+
+        <div class="select-box" style="background-color: #a17e6b">
+            <font color="white" style="font-family:Microsoft JhengHei">餐廳：</font>
+            <label for="restaurantSelect" class="label select-box1" value=0 selected disabled hidden><span class="label-desc">請選擇（餐廳）</span></label>
+            <select class="select" onchange="getRestaurantVal()" id="restaurantSelect" name="restaurantSelect">
+                {% for restaurant_item in select_restaurant %}
+                    <option id="{{ restaurant_item.id }}"
+                            value={{ restaurant_item.restaurant_address}}>{{ restaurant_item.restaurant_name}}</option> {% endfor %}
+            </select>
+        </div>
+
+
+        <script>
+            $("select").on("click", function () {
+
+                $(this).parent(".select-box").toggleClass("open");
+                
+            });
+
+            $(document).mouseup(function (e) {
+                var container = $(".select-box");
+
+                if (container.has(e.target).length === 0) {
+                    container.removeClass("open");
+                }
+            });
+
+            
+
+            $("select").on("change", function () {
+
+                var selection = $(this).find("option:selected").text(),
+                    labelFor = $(this).attr("id"),
+                    label = $("[for='" + labelFor + "']");
+
+                label.find(".label-desc").html(selection);
+
+            });
+
+            $("#chose_country").change(function () {
+                selected_country = $("#chose_country").val()
+                console.log(selected_country)
+                $('#chose_area').empty();
+                $('#restaurantSelect').empty();
+                $('#chose_area').append("<option value=\"\" disabled selected>選擇地區</option>")
+                {% for city in city_all %}
+                    if ({{ city.country_id }} == selected_country){
+                        $('#chose_area').append("<option value={{city.id}}>{{city.city_name}}</option>")
+                    }
+                {% endfor %}
+            });
+
+            $("#search_btn").on("click", function () {
+
+                selected_country = $("#chose_country").val()
+                selected_city = $("#chose_area").val()
+                // if (selected_country != 1 && selected_country != 2 && selected_country != 3){
+                if (selected_country == null){
+                    alert('請選擇國家及地區');
+                }else{
+                    if (selected_city == null){
+                        alert('你沒選擇地區');
+                    }
+                    else{
+                        // alert();
+                    }
+                }
+                
+                
+            });
+
+
+
+        </script>
+        <style>
+
+
+        </style>
+    </form>
+</div>
+<div align="right" ; style="background:#a17e6b; font-size:25px">
+    <button class="button2" onclick="add2collection()" style="font-family:Microsoft JhengHei">加入收藏</button>
+</div>
+<div id="map" class="inner-form"></div>
+<!-- This templates was made by Colorlib (https://colorlib.com) -->
+</body>
+
+</html>

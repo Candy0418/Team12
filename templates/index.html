@@ -405,37 +405,36 @@
 </script>
 {% endif %}
 
-<div align="right" ; style="background:#a17e6b; height:80px">
-    <!------------------------------------------------------------------------>
-    {% if user.is_authenticated %}
-        <font color="white" style="font-family:Microsoft JhengHei;" >Hi {{ user.username }}!</font>
-        <br>
-        <a href="{% url 'logout' %}"
-           style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI">登出</a>
-    {% else %}
-        <button type="button" class="btn btn-outline-primary" style="margin-top: 15px; margin-right: 5px; border-color:white;">
-            <a style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI; font-size:25px; " href="{% url 'login' %}">
-                登入
-            </a>
-        </button>
-        &nbsp;
-        &nbsp;
-        <button type="button" class="btn btn-outline-primary" style="margin-right: 60px; margin-top: 15px; border-color:white;">
-            <a style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI; font-size:25px;"href="{% url 'signup' %}">
+    <nav style="background:#a17e6b; height:80px">
+        <a style="font-size: 55px; color: white; font-weight: bold; margin-left: 15px;">
+            FoodMap
+        </a>
+        {% if user.is_authenticated %}
+            <font color="white" style="font-family:Microsoft JhengHei;" >Hi {{ user.username }}!</font>
+            <br>
+            <a align="right" ; href="{% url 'logout' %}"
+               style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI">登出</a>
+        {% else %}
+            <button type="button" class="btn btn-outline-primary" style="float: right; margin-right: 60px; margin-top: 15px; border-color:white;">
+                <a style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI; font-size:25px;"href="{% url 'signup' %}">
                 註冊
-            </a>
-        </button>
-    {% endif %}
-    <!------------------------------------------------------------------------>
-</div>
+                </a>
+            </button>
+            &nbsp;
+            &nbsp;
+            <button type="button" class="btn btn-outline-primary" style="float: right; margin-top: 15px; margin-right: 5px; border-color:white;">
+                <a style="color:#ffffff; text-decoration:none; font-family:Microsoft JhengHei UI; font-size:25px; " href="{% url 'login' %}">
+                登入
+                </a>
+            </button>
+
+        {% endif %}
+    </nav>
+
 <div class="s01">
 
     <form action="" method="post">
         {% csrf_token %}
-        <fieldset>
-            <legend>FoodMap</legend>
-        </fieldset>
-
 
         <div class="inner-form" style="margin-top: 150px;">
                 <div>
@@ -549,9 +548,11 @@
 {#            </select>#}
 {#        </div>#}
 
-        <div class="select-box" style="background-color: #a17e6b">
-            <font color="white" style="font-family:Microsoft JhengHei">餐廳：</font>
-            <label for="restaurantSelect" class="label select-box1" value=0 selected disabled hidden><span class="label-desc">請選擇（餐廳）</span></label>
+        <div class="select-box" >
+            <font style="font-family:Microsoft JhengHei; color:black;">餐廳：</font>
+            <label style="color: black" for="restaurantSelect" class="label select-box1" value=0 selected disabled >
+                <span class="label-desc">請選擇（餐廳）</span>
+            </label>
             <select class="select" onchange="getRestaurantVal()" id="restaurantSelect" name="restaurantSelect">
                 {% for restaurant_item in select_restaurant %}
                     <option id="{{ restaurant_item.id }}"
